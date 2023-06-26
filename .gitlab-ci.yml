@@ -36,6 +36,6 @@ wasm-test:
     - go mod vendor
     - unset SSH_PRIVATE_KEY
     - unset $(env | grep '=' | awk -F= '{print $1}' | grep -v PATH | grep -v GO | grep -v HOME)
-    - rm vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throw_js.s
-    - mv vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throws.dev vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throws.go
+#    - rm vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throw_js.s
+#    - mv vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throws.dev vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throws.go
     - GOOS=js GOARCH=wasm go test ./... -v
