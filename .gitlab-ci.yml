@@ -1,0 +1,41 @@
+image: $DOCKER_IMAGE
+
+before_script:
+  - go version || echo "Go executable not found."
+  - echo $CI_BUILD_REF
+  - echo $CI_PROJECT_DIR
+  - echo $PWD
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan -t rsa $GITLAB_SERVER > ~/.ssh/known_hosts
+  - rm -rf ~/.gitconfig
+  - git config --global url."git@$GITLAB_SERVER:".insteadOf "https://gitlab.com/"
+  - git config --global url."git@$GITLAB_SERVER:".insteadOf "https://git.xx.network/" --add
+  - export PATH=$HOME/go/bin:$PATH
+  - export GOPATH=$HOME/go/bin
+
+stages:
+  - test
+
+go-test:
+  stage: test
+  except:
+    - tags
+  script:
+    - go mod vendor -v
+    - CGO_CFLAGS_ALLOW="-Xpreprocessor" go test ./... -v
+
+wasm-test:
+  stage: test
+  except:
+    - tags
+  script:
+    - export PATH=/root/go/bin:$PATH
+    - go mod vendor
+    - unset SSH_PRIVATE_KEY
+    - unset $(env | grep '=' | awk -F= '{print $1}' | grep -v PATH | grep -v GO | grep -v HOME)
+    - rm vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throw_js.s
+    - mv vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throws.dev vendor/gitlab.com/elixxir/imagemagic-wrapper/exception/throws.go
+    - GOOS=js GOARCH=wasm go test ./... -v
